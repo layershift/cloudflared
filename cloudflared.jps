@@ -1,0 +1,46 @@
+version: 0.1
+type: update
+name: 'Cloudflared'
+homepage: https://github.com/layershift/cloudflared
+id: 'cloudflared'
+description:
+  short: Cloudflared tunnel client
+logo: cloudflared.png
+categories:
+ - apps/others
+
+targetNodes:
+  nodeType:
+  - "*"
+
+onInstall:
+  deployRPM:
+    nodeId: ${targetNodes.nodeGroup}
+
+
+onAfterRedeployContainer:
+  - forEach(event.response.responses):
+      deployRPM:
+        nodeId: ${@i.nodeid}
+        
+onAfterScaleOut:
+  - forEach(event.response.nodes):
+      deployRPM:
+        nodeId: ${@i.id}
+
+onUninstall: removeRPM
+
+actions:
+  deployRPM:
+    user: root
+    cmd[${this.nodeId}]:
+        - yum -q install yum-utils -y
+        - yum -q update -y
+        - yum-config-manager --add-repo https://pkg.cloudflare.com/cloudflared-ascii.repo
+        - yum -q install cloudflared -y
+
+  removeRPM:
+    user: root
+    cmd[${targetNodes.nodeGroup}]:
+        - yum -q autoremove cloudflared -y
+        - rm -f /etc/yum.repos.d/cloudflared-ascii.repo
