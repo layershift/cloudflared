@@ -17,7 +17,6 @@ onInstall:
   deployRPM:
     nodeId: ${targetNodes.nodeGroup}
 
-
 onAfterRedeployContainer:
   - forEach(event.response.responses):
       deployRPM:
@@ -38,9 +37,11 @@ actions:
         - yum -q update -y
         - yum-config-manager --add-repo https://pkg.cloudflare.com/cloudflared-ascii.repo
         - yum -q install cloudflared -y
+        - echo "Cmnd_Alias CLOUDFLARED = /usr/local/bin/cloudflared *" > /etc/sudoers.d/cloudflared; echo "%ssh-access ALL = NOPASSWD: CLOUDFLARED" >> /etc/sudoers.d/cloudflared
 
   removeRPM:
     user: root
     cmd[${targetNodes.nodeGroup}]:
         - yum -q autoremove cloudflared -y
         - rm -f /etc/yum.repos.d/cloudflared-ascii.repo
+        - rm -f /etc/sudoers.d/cloudflared
